@@ -92,6 +92,7 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       minY = Infinity,
       maxY = 0;
     paths.forEach((path) => {
+      // We'll still calculate overall bounds for the view
       Object.values(path.points).forEach((point) => {
         minX = Math.min(minX, point.x);
         maxX = Math.max(maxX, point.x);
@@ -115,14 +116,19 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     const xTickCount = width < 500 ? 3 : 5;
     const yTickCount = height < 300 ? 3 : 5;
 
-    const transformPoint = (point: { x: number; y: number }) => ({
-      x: xScale(point.x),
-      y: yScale(point.y),
+    // Modified transform point function to standardize start points
+    const transformPoint = (
+      point: { x: number; y: number },
+      isStart = false
+    ) => ({
+      x: isStart ? xScale(10) : xScale(point.x),
+      y: isStart ? yScale(380) : yScale(point.y),
     });
 
     const generateTransformedPath = (points: PathPoints) => {
       const { start, cp1, cp2, end } = points;
-      const tStart = transformPoint(start);
+      // Use the isStart parameter for the start point only
+      const tStart = transformPoint(start, true); // Always start at (10, 380)
       const tCp1 = transformPoint(cp1);
       const tCp2 = transformPoint(cp2);
       const tEnd = transformPoint(end);
@@ -262,6 +268,19 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         .attr("fill", "none")
         .attr("data-id", path.id);
 
+      // Add ghost ball at the starting point
+      const startPoint = transformPoint(path.points.start, true); // Use standardized start point
+      g.append("circle")
+        .attr("cx", startPoint.x)
+        .attr("cy", startPoint.y)
+        .attr("r", 10)
+        .attr("fill", "gray") // Changed color to gray
+        .attr("opacity", 0.8)
+        .attr("stroke", "white")
+        .attr("stroke-width", 1)
+        .attr("class", "ghost-ball")
+        .attr("data-path-id", path.id);
+
       // Show control points and lines for selected path in edit mode
       if (selectedPaths.some((p) => p.id === path.id) && isEditMode) {
         const { start, cp1, cp2, end } = path.points;
@@ -346,7 +365,8 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       selectedPath: Path
     ): Promise<{ tAscend: number; vFinal: number }> => {
       return new Promise((resolve) => {
-        const ballStart = transformPoint(selectedPath.points.start);
+        // Use the standardized start point for the ball
+        const ballStart = transformPoint(selectedPath.points.start, true);
         const ball = g
           .append("circle")
           .attr("r", 10)
@@ -394,6 +414,9 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     };
 
     if (isAnimating) {
+      // Remove ghost balls when animation starts
+      g.selectAll(".ghost-ball").remove();
+
       // Animate all selected balls concurrently and wait until all have finished.
       const animationPromises = selectedPaths.map((path) => animateBall(path));
       Promise.all(animationPromises).then((results) => {

@@ -75,7 +75,7 @@ export const RunHistoryTable = ({ runHistory }: RunHistoryTableProps) => {
                   </Flex>
                   <Flex justifyContent="space-between">
                     <Text fontSize={fontSize} fontWeight="bold">
-                      Terminal Velocity:
+                      Maximum Speed:
                     </Text>
                     <Text fontSize={fontSize}>{run.terminalVelocity} m/s</Text>
                   </Flex>
