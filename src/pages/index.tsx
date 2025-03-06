@@ -1,6 +1,6 @@
 import { ChakraProvider, Box, Heading, Text } from "@chakra-ui/react";
 import React from "react";
-import PhysicsVisualizer from "../components/PhysicsVisualizer";
+import PhysicsVisualizer from "../components/PhysicsVisualizer/index";
 
 export default function Home() {
   return (
