@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { Box } from "@chakra-ui/react";
+import { Box, useBreakpointValue } from "@chakra-ui/react";
 import { Path, PlaneDimensions, RunHistoryRecord, PathPoints } from "./types";
 import { GRAVITY } from "./constants";
 
@@ -37,16 +37,52 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   onRunComplete,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+
+  // Adjust handle radius for mobile devices
+  const handleRadius = useBreakpointValue({ base: 8, md: 6 }) || 6;
+
+  // Update dimensions on resize
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.clientWidth;
+        // Maintain aspect ratio (1.6:1)
+        const height = Math.min(500, width * 0.625);
+        setDimensions({ width, height });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
 
   useEffect(() => {
+    if (!containerRef.current) return;
+
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove(); // Clear previous drawing
 
-    const margin = { top: 30, right: 30, bottom: 60, left: 60 };
-    const width = 800 - margin.left - margin.right;
-    const height = 500 - margin.top - margin.bottom;
+    // Use relative dimensions rather than fixed pixels
+    const width = dimensions.width;
+    const height = dimensions.height;
+
+    // Scale margins proportionally to the canvas size
+    const margin = {
+      top: Math.max(20, height * 0.06),
+      right: Math.max(20, width * 0.04),
+      bottom: Math.max(40, height * 0.12),
+      left: Math.max(40, width * 0.075),
+    };
+
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
 
     const g = svg
+      .attr("width", width)
+      .attr("height", height)
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -69,11 +105,15 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     const xScale = d3
       .scaleLinear()
       .domain([0, Math.max(planeDimensions.x, maxX)])
-      .range([0, width]);
+      .range([0, innerWidth]);
     const yScale = d3
       .scaleLinear()
       .domain([0, Math.max(planeDimensions.y, maxY)])
-      .range([height, 0]);
+      .range([innerHeight, 0]);
+
+    // Adjust number of ticks based on available space
+    const xTickCount = width < 500 ? 3 : 5;
+    const yTickCount = height < 300 ? 3 : 5;
 
     const transformPoint = (point: { x: number; y: number }) => ({
       x: xScale(point.x),
@@ -92,20 +132,20 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     // Update tick formatting to be more compact
     const xAxis = d3
       .axisBottom(xScale)
-      .ticks(5)
-      .tickSize(-height)
+      .ticks(xTickCount)
+      .tickSize(-innerHeight)
       .tickFormat((d) => `${d}`);
 
     const yAxis = d3
       .axisLeft(yScale)
-      .ticks(5)
-      .tickSize(-width)
+      .ticks(yTickCount)
+      .tickSize(-innerWidth)
       .tickFormat((d) => `${d}`);
 
     // Add x-axis and remove its outer domain path
     const xAxisGroup = g
       .append("g")
-      .attr("transform", `translate(0, ${height})`)
+      .attr("transform", `translate(0, ${innerHeight})`)
       .call(xAxis);
     xAxisGroup.select(".domain").remove();
     xAxisGroup.selectAll("line").attr("stroke", "#e0e0e0");
@@ -115,40 +155,28 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     yAxisGroup.select(".domain").remove();
     yAxisGroup.selectAll("line").attr("stroke", "#e0e0e0");
 
+    // Adjusted font sizes based on available space
+    const labelFontSize = Math.max(10, Math.min(14, width / 50));
+
     // Add axis labels with improved positioning and styling
     g.append("text")
-      .attr("x", width / 2)
-      .attr("y", height + margin.bottom - 15) // More space between axis and label
+      .attr("x", innerWidth / 2)
+      .attr("y", innerHeight + margin.bottom - 15)
       .attr("text-anchor", "middle")
-      .attr("font-size", "14px")
+      .attr("font-size", `${labelFontSize}px`)
       .attr("font-weight", "bold")
       .attr("fill", "#555")
       .text("Distance (cm)");
 
     g.append("text")
       .attr("transform", "rotate(-90)")
-      .attr("x", -height / 2)
-      .attr("y", -margin.left + 15) // More space between axis and label
+      .attr("x", -innerHeight / 2)
+      .attr("y", -margin.left + 15)
       .attr("text-anchor", "middle")
-      .attr("font-size", "14px")
+      .attr("font-size", `${labelFontSize}px`)
       .attr("font-weight", "bold")
       .attr("fill", "#555")
       .text("Height (cm)");
-
-    // Add units as separate labels to avoid overcrowding
-    g.append("text")
-      .attr("x", width)
-      .attr("y", height + 35)
-      .attr("text-anchor", "end")
-      .attr("font-size", "12px")
-      .attr("fill", "#777");
-
-    g.append("text")
-      .attr("x", -5)
-      .attr("y", -10)
-      .attr("text-anchor", "end")
-      .attr("font-size", "12px")
-      .attr("fill", "#777");
 
     // Update control lines function
     const updateControlLines = (
@@ -185,6 +213,7 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       pointKey: string;
     };
 
+    // Enhanced drag handler with touch support
     const dragHandler = d3
       .drag<SVGCircleElement, DragDatum>()
       .on("drag", (event, d) => {
@@ -261,9 +290,7 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
           .attr("stroke-dasharray", "4")
           .attr("data-line", `${path.id}-cp2-end`);
 
-        // Draw handles as draggable circles
-        const handleRadius = 6;
-
+        // Draw handles as draggable circles with increased size for touch
         // Start handle
         g.append("circle")
           .datum({ pathId: path.id, pointKey: "start" })
@@ -377,13 +404,6 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         setIsAnimating(false);
       });
     }
-
-    // Add inside useEffect, before drawing paths
-    console.log("planeDimensions:", planeDimensions);
-    console.log(
-      "Path points:",
-      paths.map((p) => p.points)
-    );
   }, [
     paths,
     selectedPaths,
@@ -393,14 +413,30 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     updateControlPoint,
     onRunComplete,
     setIsAnimating,
+    dimensions,
+    handleRadius,
   ]);
 
   return (
-    <svg
-      ref={svgRef}
-      width={800}
-      height={500}
-      style={{ backgroundColor: "#fff" }}
-    />
+    <Box
+      ref={containerRef}
+      width="100%"
+      maxWidth="800px"
+      mx="auto"
+      overflowX="auto"
+      overflowY="hidden"
+    >
+      <svg
+        ref={svgRef}
+        style={{
+          backgroundColor: "#fff",
+          touchAction: "none", // Prevents default touch actions like scrolling
+          width: "100%",
+          height: "auto",
+        }}
+        viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+        preserveAspectRatio="xMidYMid meet"
+      />
+    </Box>
   );
 };
