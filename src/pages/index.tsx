@@ -8,8 +8,8 @@ export default function Home() {
       <Box p="8" textAlign="center">
         <Heading>Let's do some physics</Heading>
         <Text mt="4">
-          This visualization shows a ball moving along a path. Click on a path to select it, then
-          click "Launch Ball" to see the ball move along the path.
+          This visualization shows a balls rolling of the ramps. Click on a button select to a path or all at once, then
+          click "Launch Balls" to see the results.
         </Text>
         <PhysicsVisualizer />
       </Box>
