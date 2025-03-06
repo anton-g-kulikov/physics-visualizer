@@ -110,6 +110,9 @@ const PhysicsVisualizer: React.FC = () => {
           bg="gray.50"
           border="1px solid"
           borderColor="gray.200"
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
         >
           <RampControls
             paths={paths}
