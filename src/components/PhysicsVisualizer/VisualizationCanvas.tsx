@@ -42,8 +42,8 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove(); // Clear previous drawing
 
-    // Add margins for better axis display
-    const margin = { top: 30, right: 30, bottom: 50, left: 50 };
+    // Update the margin to provide more space for labels
+    const margin = { top: 30, right: 30, bottom: 60, left: 60 };
     const width = 800 - margin.left - margin.right;
     const height = 500 - margin.top - margin.bottom;
 
@@ -96,18 +96,18 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       return `M${tStart.x},${tStart.y} C${tCp1.x},${tCp1.y} ${tCp2.x},${tCp2.y} ${tEnd.x},${tEnd.y}`;
     };
 
-    // Create axes
+    // Update tick formatting to be more compact
     const xAxis = d3
       .axisBottom(xScale)
       .ticks(5)
       .tickSize(-height)
-      .tickFormat((d) => `${d}cm`);
+      .tickFormat((d) => `${d}`); // Remove "cm" from ticks
 
     const yAxis = d3
       .axisLeft(yScale)
       .ticks(5)
       .tickSize(-width)
-      .tickFormat((d) => `${d} cm`);
+      .tickFormat((d) => `${d}`); // Remove "cm" from ticks
 
     // Add x-axis
     g.append("g")
@@ -119,19 +119,42 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     // Add y-axis
     g.append("g").call(yAxis).selectAll("line").attr("stroke", "#e0e0e0");
 
-    // Add axis labels
+    // Add axis labels with improved positioning and styling
     g.append("text")
       .attr("x", width / 2)
-      .attr("y", height + margin.bottom - 10)
+      .attr("y", height + margin.bottom - 15) // More space between axis and label
       .attr("text-anchor", "middle")
+      .attr("font-size", "14px")
+      .attr("font-weight", "bold")
+      .attr("fill", "#555")
       .text("Distance (cm)");
 
     g.append("text")
       .attr("transform", "rotate(-90)")
       .attr("x", -height / 2)
-      .attr("y", -margin.left + 15)
+      .attr("y", -margin.left + 15) // More space between axis and label
       .attr("text-anchor", "middle")
+      .attr("font-size", "14px")
+      .attr("font-weight", "bold")
+      .attr("fill", "#555")
       .text("Height (cm)");
+
+    // Add units as separate labels to avoid overcrowding
+    g.append("text")
+      .attr("x", width)
+      .attr("y", height + 35)
+      .attr("text-anchor", "end")
+      .attr("font-size", "12px")
+      .attr("fill", "#777")
+      .text("(cm)");
+
+    g.append("text")
+      .attr("x", -5)
+      .attr("y", -10)
+      .attr("text-anchor", "end")
+      .attr("font-size", "12px")
+      .attr("fill", "#777")
+      .text("(cm)");
 
     // Update control lines function
     const updateControlLines = (
@@ -317,7 +340,7 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     );
     const vFinal = Math.sqrt(2 * GRAVITY * heightChange);
 
-    const speedFactor = 0.1; // Lower value = faster animation
+    const speedFactor = 0.05; // Lower value = faster animation
     const tAscend = ((2 * pathLength) / vFinal) * speedFactor;
 
     // Animate ball
@@ -366,9 +389,7 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       width={800}
       height={500}
       style={{
-        border: "1px solid gray",
-        borderRadius: "8px",
-        backgroundColor: "#f9f9f9",
+        backgroundColor: "#fff",
       }}
     />
   );

@@ -1,9 +1,7 @@
 "use client"; // Needed for Next.js App Router to handle client-side state
 import React, { useState } from "react";
-import { Box, Flex } from "@chakra-ui/react";
-import { EditModeToggle } from "./EditModeToggle";
+import { Box, Container, Divider, Flex, VStack } from "@chakra-ui/react";
 import { RampControls } from "./RampControls";
-import { RampDesigner } from "./RampDesigner";
 import { RunHistoryTable } from "./RunHistoryTable";
 import { VisualizationCanvas } from "./VisualizationCanvas";
 import { LaunchButton } from "./LaunchButton";
@@ -66,40 +64,70 @@ const PhysicsVisualizer: React.FC = () => {
   };
 
   return (
-    <Flex direction="column" align="center" p={4}>
-      <EditModeToggle isEditMode={isEditMode} toggleEditMode={toggleEditMode} />
-      <Flex width="100%" justify="space-between" mt={4}>
-        {/* <RampDesigner
+    <Container maxW="1200px" px={4} centerContent>
+      <VStack spacing={6} width="100%" align="center">
+        <EditModePanel
+          isEditMode={isEditMode}
+          toggleEditMode={toggleEditMode}
           planeDimensions={planeDimensions}
           handleDimensionChange={handleDimensionChange}
           resetPaths={resetPaths}
           isAnimating={isAnimating}
-        /> */}
-      </Flex>
-      <VisualizationCanvas
-        paths={paths}
-        selectedPath={selectedPath}
-        isEditMode={isEditMode}
-        isAnimating={isAnimating}
-        planeDimensions={planeDimensions}
-        updateControlPoint={updateControlPoint}
-        onRunComplete={handleRunComplete} // Pass the handler here
-        setIsAnimating={setIsAnimating}
-        setTimeToAscend={(time: string) => {}} // Add this line
-        setTerminalVelocity={(velocity: string) => {}} // Add this line
-        addRunHistoryRecord={(
-          record: Omit<RunHistoryRecord, "id" | "date">
-        ) => {}} // Add this line
-      />
-      <RampControls
-        paths={paths}
-        selectedPath={selectedPath}
-        setSelectedPath={setSelectedPath}
-        isAnimating={isAnimating}
-        onLaunch={() => setIsAnimating(true)}
-      />
-      <RunHistoryTable runHistory={runHistory} />
-    </Flex>
+        />
+        
+        {/* Main visualization area with shadow and border */}
+        <Box 
+          width="100%" 
+          borderRadius="lg" 
+          overflow="hidden"
+          boxShadow="lg"
+          border="1px solid"
+          borderColor="gray.200"
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <VisualizationCanvas
+            paths={paths}
+            selectedPath={selectedPath}
+            isEditMode={isEditMode}
+            isAnimating={isAnimating}
+            planeDimensions={planeDimensions}
+            updateControlPoint={updateControlPoint}
+            onRunComplete={handleRunComplete}
+            setIsAnimating={setIsAnimating}
+            setTimeToAscend={(time: string) => {}}
+            setTerminalVelocity={(velocity: string) => {}}
+            addRunHistoryRecord={(record: Omit<RunHistoryRecord, "id" | "date">) => {}}
+          />
+        </Box>
+        
+        {/* Controls section with background */}
+        <Box 
+          width="100%"
+          p={4}
+          borderRadius="md" 
+          bg="gray.50"
+          border="1px solid"
+          borderColor="gray.200"
+        >
+          <RampControls
+            paths={paths}
+            selectedPath={selectedPath}
+            setSelectedPath={setSelectedPath}
+            isAnimating={isAnimating}
+            onLaunch={() => setIsAnimating(true)}
+          />
+        </Box>
+        
+        <Divider my={2} />
+        
+        {/* History table with cleaner styling */}
+        <Box width="100%" overflowX="auto">
+          <RunHistoryTable runHistory={runHistory} />
+        </Box>
+      </VStack>
+    </Container>
   );
 };
 

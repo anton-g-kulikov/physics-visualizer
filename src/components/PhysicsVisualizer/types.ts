@@ -50,10 +50,11 @@ export interface VisualizationCanvasProps {
 
 export interface EditModePanelProps {
   isEditMode: boolean;
-  planeDimensions: PlaneDimensions;
   toggleEditMode: () => void;
+  planeDimensions: PlaneDimensions;
   handleDimensionChange: (dimension: "x" | "y", value: number) => void;
   resetPaths: () => void;
+  isAnimating: boolean;
 }
 
 export interface PathControlsProps {

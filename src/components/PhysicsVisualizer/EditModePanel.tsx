@@ -9,12 +9,14 @@ import {
 } from "@chakra-ui/react";
 import { EditModePanelProps } from "./types";
 
+
 export const EditModePanel: React.FC<EditModePanelProps> = ({
   isEditMode,
   toggleEditMode,
   planeDimensions,
   handleDimensionChange,
   resetPaths,
+  isAnimating, // Add this to the destructuring
 }) => {
   return (
     <>
@@ -26,7 +28,7 @@ export const EditModePanel: React.FC<EditModePanelProps> = ({
         width="100%"
       >
         <FormLabel htmlFor="edit-mode" mb="0" fontWeight="bold">
-          Edit Mode
+          Edit Ramps
         </FormLabel>
         <Switch
           id="edit-mode"
@@ -34,6 +36,7 @@ export const EditModePanel: React.FC<EditModePanelProps> = ({
           onChange={toggleEditMode}
           colorScheme="purple"
           size="lg"
+          isDisabled={isAnimating} // Now you can use it to disable the switch during animation
         />
       </FormControl>
 
@@ -92,6 +95,7 @@ export const EditModePanel: React.FC<EditModePanelProps> = ({
                       borderRadius: "6px",
                       fontSize: "16px",
                     }}
+                    disabled={isAnimating} // Disable input during animation
                   />
                   <Text ml={2} color="gray.500">
                     cm
@@ -120,6 +124,7 @@ export const EditModePanel: React.FC<EditModePanelProps> = ({
                       borderRadius: "6px",
                       fontSize: "16px",
                     }}
+                    disabled={isAnimating} // Disable input during animation
                   />
                   <Text ml={2} color="gray.500">
                     cm
