@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, Button } from "@chakra-ui/react";
+import { VStack, Flex, Button } from "@chakra-ui/react";
 import { RampControlsProps } from "./types";
 
 export const RampControls: React.FC<RampControlsProps> = ({
@@ -10,7 +10,7 @@ export const RampControls: React.FC<RampControlsProps> = ({
   onLaunch,
 }) => {
   return (
-    <>
+    <VStack>
       <Flex mt={4} gap={3}>
         {paths.map((path) => (
           <Button
@@ -30,6 +30,6 @@ export const RampControls: React.FC<RampControlsProps> = ({
       >
         Launch Ball
       </Button>
-    </>
+    </VStack>
   );
 };
