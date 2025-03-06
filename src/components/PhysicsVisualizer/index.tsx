@@ -10,6 +10,7 @@ import { EditModePanel } from "./EditModePanel";
 import { Path, RunHistoryRecord, PlaneDimensions } from "./types";
 import { STORAGE_KEY, initialPaths } from "./constants";
 import { usePaths } from "./hooks/usePaths";
+import UserPrediction from "../UserPrediction";
 
 const PhysicsVisualizer: React.FC = () => {
   // Use our custom hook for path management
@@ -27,6 +28,7 @@ const PhysicsVisualizer: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [runHistory, setRunHistory] = useState<RunHistoryRecord[]>([]);
+  const [predictionsSubmitted, setPredictionsSubmitted] = useState(false);
 
   // Toggle edit mode and save paths when exiting
   const toggleEditMode = () => {
@@ -63,6 +65,11 @@ const PhysicsVisualizer: React.FC = () => {
     setRunHistory([...runHistory, newRecord]);
   };
 
+  const handlePredictionSubmit = (predictions: any) => {
+    // You can use the predictions as needed in your simulation logic.
+    setPredictionsSubmitted(true);
+  };
+
   return (
     <Container maxW="1200px" px={4} centerContent>
       <VStack spacing={6} width="100%" align="center">
@@ -74,11 +81,11 @@ const PhysicsVisualizer: React.FC = () => {
           resetPaths={resetPaths}
           isAnimating={isAnimating}
         />
-        
+
         {/* Main visualization area with shadow and border */}
-        <Box 
-          width="100%" 
-          borderRadius="lg" 
+        <Box
+          width="100%"
+          borderRadius="lg"
           overflow="hidden"
           boxShadow="lg"
           border="1px solid"
@@ -98,15 +105,17 @@ const PhysicsVisualizer: React.FC = () => {
             setIsAnimating={setIsAnimating}
             setTimeToAscend={(time: string) => {}}
             setTerminalVelocity={(velocity: string) => {}}
-            addRunHistoryRecord={(record: Omit<RunHistoryRecord, "id" | "date">) => {}}
+            addRunHistoryRecord={(
+              record: Omit<RunHistoryRecord, "id" | "date">
+            ) => {}}
           />
         </Box>
-        
+
         {/* Controls section with background */}
-        <Box 
+        <Box
           width="100%"
           p={4}
-          borderRadius="md" 
+          borderRadius="md"
           bg="gray.50"
           border="1px solid"
           borderColor="gray.200"
@@ -122,14 +131,22 @@ const PhysicsVisualizer: React.FC = () => {
             onLaunch={() => setIsAnimating(true)}
           />
         </Box>
-        
+
         <Divider my={2} />
-        
+
         {/* History table with cleaner styling */}
         <Box width="100%" overflowX="auto">
           <RunHistoryTable runHistory={runHistory} />
         </Box>
       </VStack>
+      {!predictionsSubmitted && (
+        <UserPrediction onPredictionSubmit={handlePredictionSubmit} />
+      )}
+      <LaunchButton
+        isAnimating={isAnimating}
+        setIsAnimating={setIsAnimating}
+        predictionsSubmitted={predictionsSubmitted}
+      />
     </Container>
   );
 };
