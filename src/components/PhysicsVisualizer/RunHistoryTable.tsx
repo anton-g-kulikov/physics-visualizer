@@ -19,7 +19,7 @@ export const RunHistoryTable = ({ runHistory }: RunHistoryTableProps) => {
   return (
     <Box mt={4} p={4} border="1px solid gray" borderRadius="md" width="100%">
       <Text fontSize="lg" mb={2}>
-        Run History (Grouped by Ramp Color)
+        Run Results
       </Text>
       <Table variant="simple" size="sm">
         <Thead>
