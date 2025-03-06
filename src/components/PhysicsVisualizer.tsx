@@ -21,16 +21,16 @@ import {
 const GRAVITY = 9.81; // Acceleration due to gravity (m/s²)
 const STORAGE_KEY = "physics-visualizer-paths";
 
-// Update the path endpoints to use more of the 800 units width
+// Update initialPaths with the new defaults
 const initialPaths = [
   {
     id: "path1",
     color: "orange",
     points: {
       start: { x: 0, y: 400 },
-      cp1: { x: 467.31480916341144, y: 270.400143577939 },
-      cp2: { x: 205.64811706542972, y: 122.78111049107143 },
-      end: { x: 580, y: 50 },
+      cp1: { x: 772.9629516601562, y: 320.66468738374255 },
+      cp2: { x: 274.6295928955078, y: 119.71232096354166 },
+      end: { x: 1180, y: 50 },
     },
   },
   {
@@ -40,7 +40,7 @@ const initialPaths = [
       start: { x: 0, y: 400 },
       cp1: { x: 93.98146311442058, y: 0 },
       cp2: { x: 428.9814758300781, y: 59.712320963541686 },
-      end: { x: 580, y: 50 },
+      end: { x: 1180, y: 50 },
     },
   },
   {
@@ -48,9 +48,9 @@ const initialPaths = [
     color: "teal",
     points: {
       start: { x: 0, y: 400 },
-      cp1: { x: 594.8148091634115, y: 232.093258812314 },
-      cp2: { x: 288.981450398763, y: 170.18851143973214 },
-      end: { x: 580, y: 50 },
+      cp1: { x: 1200, y: 304.47421119326634 },
+      cp2: { x: 767.9629007975261, y: 119.71232096354166 },
+      end: { x: 1180, y: 50 },
     },
   },
   {
@@ -58,9 +58,9 @@ const initialPaths = [
     color: "red",
     points: {
       start: { x: 0, y: 400 },
-      cp1: { x: 303.98145039876306, y: 199.71230643136158 },
-      cp2: { x: 300.6481170654297, y: 203.52183024088538 },
-      end: { x: 580, y: 50 },
+      cp1: { x: 604.6295674641926, y: 199.71230643136158 },
+      cp2: { x: 599.6295674641927, y: 202.56944928850444 },
+      end: { x: 1180, y: 50 },
     },
   },
 ];
@@ -538,74 +538,119 @@ const PhysicsVisualizer = () => {
 
   return (
     <Flex direction="column" align="center" p={5}>
+      {/* Edit mode toggle - always visible */}
       <FormControl
         display="flex"
         alignItems="center"
         mt={4}
-        justifyContent="space-between"
+        justifyContent="flex-start"
         width="100%"
       >
-        <Flex alignItems="center">
-          <FormLabel htmlFor="edit-mode" mb="0">
-            Edit the Ramps
-          </FormLabel>
-          <Switch
-            id="edit-mode"
-            isChecked={isEditMode}
-            onChange={toggleEditMode}
-          />
-        </Flex>
-        <Button colorScheme="red" size="sm" onClick={resetPaths}>
-          Reset to Default Paths
-        </Button>
+        <FormLabel htmlFor="edit-mode" mb="0" fontWeight="bold">
+          Edit Mode
+        </FormLabel>
+        <Switch
+          id="edit-mode"
+          isChecked={isEditMode}
+          onChange={toggleEditMode}
+          colorScheme="purple"
+          size="lg"
+        />
       </FormControl>
 
-      {/* Add plane dimensions controls that only appear in edit mode */}
+      {/* Settings panel - only visible in edit mode */}
       {isEditMode && (
         <Box
           mt={4}
-          p={4}
-          border="1px solid gray"
-          borderRadius="md"
+          p={5}
+          border="2px solid"
+          borderColor="purple.300"
+          borderRadius="lg"
           width="100%"
+          bg="gray.50"
+          boxShadow="md"
         >
-          <Text fontSize="lg" mb={2}>
-            Plane Dimensions
-          </Text>
-          <Flex gap={4}>
-            <FormControl>
-              <FormLabel htmlFor="x-dimension">Width (X) in cm:</FormLabel>
-              <input
-                id="x-dimension"
-                type="number"
-                min="100"
-                value={planeDimensions.x}
-                onChange={(e) => handleDimensionChange("x", e.target.value)}
-                style={{
-                  width: "100px",
-                  padding: "8px",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                }}
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel htmlFor="y-dimension">Height (Y) in cm:</FormLabel>
-              <input
-                id="y-dimension"
-                type="number"
-                min="100"
-                value={planeDimensions.y}
-                onChange={(e) => handleDimensionChange("y", e.target.value)}
-                style={{
-                  width: "100px",
-                  padding: "8px",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                }}
-              />
-            </FormControl>
+          <Flex justify="space-between" align="center" mb={4}>
+            <Text fontSize="xl" fontWeight="bold" color="purple.600">
+              Ramp Designer Settings
+            </Text>
+            <Button
+              colorScheme="red"
+              size="md"
+              leftIcon={
+                <span role="img" aria-label="reset">
+                  🔄
+                </span>
+              }
+              onClick={resetPaths}
+            >
+              Reset to Default Paths
+            </Button>
           </Flex>
+
+          <Box bg="white" p={4} borderRadius="md" borderWidth="1px">
+            <Text fontSize="lg" mb={3} fontWeight="medium" color="gray.700">
+              Plane Dimensions
+            </Text>
+            <Flex gap={6} wrap="wrap">
+              <FormControl width="auto">
+                <FormLabel htmlFor="x-dimension" fontWeight="medium">
+                  Width (X) in cm:
+                </FormLabel>
+                <Flex align="center">
+                  <input
+                    id="x-dimension"
+                    type="number"
+                    min="600"
+                    max="2000"
+                    value={planeDimensions.x}
+                    onChange={(e) => handleDimensionChange("x", e.target.value)}
+                    style={{
+                      width: "120px",
+                      padding: "8px 12px",
+                      border: "1px solid #cbd5e0",
+                      borderRadius: "6px",
+                      fontSize: "16px",
+                    }}
+                  />
+                  <Text ml={2} color="gray.500">
+                    cm
+                  </Text>
+                </Flex>
+              </FormControl>
+
+              <FormControl width="auto">
+                <FormLabel htmlFor="y-dimension" fontWeight="medium">
+                  Height (Y) in cm:
+                </FormLabel>
+                <Flex align="center">
+                  <input
+                    id="y-dimension"
+                    type="number"
+                    min="200"
+                    max="800"
+                    value={planeDimensions.y}
+                    onChange={(e) => handleDimensionChange("y", e.target.value)}
+                    style={{
+                      width: "120px",
+                      padding: "8px 12px",
+                      border: "1px solid #cbd5e0",
+                      borderRadius: "6px",
+                      fontSize: "16px",
+                    }}
+                  />
+                  <Text ml={2} color="gray.500">
+                    cm
+                  </Text>
+                </Flex>
+              </FormControl>
+            </Flex>
+
+            <Text mt={4} fontSize="sm" color="gray.500">
+              Drag control points on the selected ramp to adjust its curve. All
+              changes are saved automatically when you exit edit mode.
+            </Text>
+          </Box>
         </Box>
       )}
 
