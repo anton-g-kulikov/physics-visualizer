@@ -1,23 +1,21 @@
 "use client"; // Needed for Next.js App Router to handle client-side state
 import React, { useState } from "react";
-import { Box, Container, Divider, Flex, VStack } from "@chakra-ui/react";
+import { Box, Container, Divider, VStack } from "@chakra-ui/react";
 import { RampControls } from "./RampControls";
 import { RunHistoryTable } from "./RunHistoryTable";
 import { VisualizationCanvas } from "./VisualizationCanvas";
-import { LaunchButton } from "./LaunchButton";
 import { PathControls } from "./PathControls";
 import { EditModePanel } from "./EditModePanel";
-import { Path, RunHistoryRecord, PlaneDimensions } from "./types";
+import { Path, RunHistoryRecord } from "./types";
 import { STORAGE_KEY, initialPaths } from "./constants";
 import { usePaths } from "./hooks/usePaths";
-import UserPrediction from "../UserPrediction";
 
 const PhysicsVisualizer: React.FC = () => {
-  // Use our custom hook for path management
+  // Update your usePaths hook to provide selectedPaths as an array:
   const {
     paths,
-    selectedPath,
-    setSelectedPath,
+    selectedPaths,
+    setSelectedPaths,
     planeDimensions,
     updateControlPoint,
     resetPaths,
@@ -36,10 +34,7 @@ const PhysicsVisualizer: React.FC = () => {
     setIsEditMode(newEditMode);
 
     if (!newEditMode) {
-      // Save paths when exiting edit mode
       localStorage.setItem(STORAGE_KEY, JSON.stringify(paths));
-
-      // Still log paths for convenience
       console.log("// Updated paths with custom curvatures:");
       console.log(JSON.stringify(paths, null, 2));
       console.log("// Copy the above code to use as initialPaths");
@@ -47,26 +42,23 @@ const PhysicsVisualizer: React.FC = () => {
     }
   };
 
-  // Handler for completing a run
-  const handleRunComplete = (
-    timeToAscend: number,
-    terminalVelocity: number
-  ) => {
+  // Updated handler for completing a run
+  const handleRunComplete = (times: number[], velocities: number[]) => {
     setIsAnimating(false);
-
-    // Add to history
-    const newRecord: RunHistoryRecord = {
-      id: runHistory.length + 1,
-      date: new Date().toISOString(),
-      pathColor: selectedPath.color,
-      timeToAscend: timeToAscend.toFixed(2),
-      terminalVelocity: terminalVelocity.toFixed(2),
-    };
-    setRunHistory([...runHistory, newRecord]);
+    const newRecords = times.map((time, idx) => {
+      const ballColor = selectedPaths[idx]?.color || "gray";
+      return {
+        id: runHistory.length + idx + 1,
+        date: new Date().toISOString(),
+        pathColor: ballColor,
+        timeToAscend: time.toFixed(2),
+        terminalVelocity: velocities[idx].toFixed(2),
+      };
+    });
+    setRunHistory([...runHistory, ...newRecords]);
   };
 
   const handlePredictionSubmit = (predictions: any) => {
-    // You can use the predictions as needed in your simulation logic.
     setPredictionsSubmitted(true);
   };
 
@@ -96,7 +88,7 @@ const PhysicsVisualizer: React.FC = () => {
         >
           <VisualizationCanvas
             paths={paths}
-            selectedPath={selectedPath}
+            selectedPaths={selectedPaths}
             isEditMode={isEditMode}
             isAnimating={isAnimating}
             planeDimensions={planeDimensions}
@@ -125,8 +117,8 @@ const PhysicsVisualizer: React.FC = () => {
         >
           <RampControls
             paths={paths}
-            selectedPath={selectedPath}
-            setSelectedPath={setSelectedPath}
+            selectedPaths={selectedPaths}
+            setSelectedPaths={setSelectedPaths}
             isAnimating={isAnimating}
             onLaunch={() => setIsAnimating(true)}
           />
@@ -139,14 +131,6 @@ const PhysicsVisualizer: React.FC = () => {
           <RunHistoryTable runHistory={runHistory} />
         </Box>
       </VStack>
-      {!predictionsSubmitted && (
-        <UserPrediction onPredictionSubmit={handlePredictionSubmit} />
-      )}
-      <LaunchButton
-        isAnimating={isAnimating}
-        setIsAnimating={setIsAnimating}
-        predictionsSubmitted={predictionsSubmitted}
-      />
     </Container>
   );
 };

@@ -9,7 +9,6 @@ import {
 } from "@chakra-ui/react";
 import { EditModePanelProps } from "./types";
 
-
 export const EditModePanel: React.FC<EditModePanelProps> = ({
   isEditMode,
   toggleEditMode,
@@ -51,25 +50,11 @@ export const EditModePanel: React.FC<EditModePanelProps> = ({
           bg="gray.50"
           boxShadow="md"
         >
-          <Flex justify="space-between" align="center" mb={4}>
-            <Text fontSize="xl" fontWeight="bold" color="purple.600">
-              Ramp Designer Settings
-            </Text>
-            <Button
-              colorScheme="red"
-              size="md"
-              leftIcon={
-                <span role="img" aria-label="reset">
-                  🔄
-                </span>
-              }
-              onClick={resetPaths}
-            >
-              Reset to Default Paths
-            </Button>
-          </Flex>
+          <Button colorScheme="red" size="md" onClick={resetPaths}>
+            Reset to Default
+          </Button>
 
-          <Box bg="white" p={4} borderRadius="md" borderWidth="1px">
+          {/* <Box bg="white" p={4} borderRadius="md" borderWidth="1px">
             <Text fontSize="lg" mb={3} fontWeight="medium" color="gray.700">
               Plane Dimensions
             </Text>
@@ -131,13 +116,12 @@ export const EditModePanel: React.FC<EditModePanelProps> = ({
                   </Text>
                 </Flex>
               </FormControl>
-            </Flex>
+            </Flex> */}
 
-            <Text mt={4} fontSize="sm" color="gray.500">
-              Drag control points on the selected ramp to adjust its curve. All
-              changes are saved automatically when you exit edit mode.
-            </Text>
-          </Box>
+          <Text mt={4} fontSize="xl">
+            Drag control points on the selected ramp to adjust its curve. All
+            changes are saved automatically when you exit edit mode.
+          </Text>
         </Box>
       )}
     </>

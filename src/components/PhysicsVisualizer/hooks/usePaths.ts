@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Path, PlaneDimensions } from "../types";
 
-interface UsePathsReturn {
+export interface UsePathsReturn {
   paths: Path[];
+  selectedPaths: Path[];
+  setSelectedPaths: (paths: Path[]) => void;
   setPaths: React.Dispatch<React.SetStateAction<Path[]>>;
   selectedPath: Path;
   setSelectedPath: React.Dispatch<React.SetStateAction<Path>>;
@@ -36,6 +38,8 @@ export const usePaths = (
     }
     return defaultPaths;
   });
+
+  const [selectedPaths, setSelectedPaths] = useState<Path[]>([]);
 
   // Initialize selected path
   const [selectedPath, setSelectedPath] = useState<Path>(() => {
@@ -133,6 +137,8 @@ export const usePaths = (
 
   return {
     paths,
+    selectedPaths,
+    setSelectedPaths,
     setPaths,
     selectedPath,
     setSelectedPath,

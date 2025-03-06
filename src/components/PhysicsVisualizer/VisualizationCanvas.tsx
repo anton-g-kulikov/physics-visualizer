@@ -6,7 +6,7 @@ import { GRAVITY } from "./constants";
 
 interface VisualizationCanvasProps {
   paths: Path[];
-  selectedPath: Path;
+  selectedPaths: Path[]; // Updated to array of selected paths
   isAnimating: boolean;
   isEditMode: boolean;
   planeDimensions: PlaneDimensions;
@@ -20,12 +20,12 @@ interface VisualizationCanvasProps {
     newY: number
   ) => void;
   addRunHistoryRecord: (record: Omit<RunHistoryRecord, "id" | "date">) => void;
-  onRunComplete: (timeToAscend: number, terminalVelocity: number) => void;
+  onRunComplete: (times: number[], velocities: number[]) => void; // Pass an array of results or change as needed
 }
 
 export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   paths,
-  selectedPath,
+  selectedPaths,
   isAnimating,
   isEditMode,
   planeDimensions,
@@ -42,17 +42,15 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove(); // Clear previous drawing
 
-    // Update the margin to provide more space for labels
     const margin = { top: 30, right: 30, bottom: 60, left: 60 };
     const width = 800 - margin.left - margin.right;
     const height = 500 - margin.top - margin.bottom;
 
-    // Create a group element that respects margins
     const g = svg
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Find the actual bounds of all paths to set domain properly
+    // Determine bounds based on all paths
     let minX = Infinity,
       maxX = 0,
       minY = Infinity,
@@ -65,12 +63,9 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         maxY = Math.max(maxY, point.y);
       });
     });
-
-    // Add some padding to the domains
     maxX += 20;
     maxY += 20;
 
-    // Create scales for x and y using dynamic dimensions based on actual path bounds
     const xScale = d3
       .scaleLinear()
       .domain([0, Math.max(planeDimensions.x, maxX)])
@@ -80,13 +75,11 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       .domain([0, Math.max(planeDimensions.y, maxY)])
       .range([height, 0]);
 
-    // Function to transform points based on scales
     const transformPoint = (point: { x: number; y: number }) => ({
       x: xScale(point.x),
       y: yScale(point.y),
     });
 
-    // Generate transformed path
     const generateTransformedPath = (points: PathPoints) => {
       const { start, cp1, cp2, end } = points;
       const tStart = transformPoint(start);
@@ -101,23 +94,26 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       .axisBottom(xScale)
       .ticks(5)
       .tickSize(-height)
-      .tickFormat((d) => `${d}`); // Remove "cm" from ticks
+      .tickFormat((d) => `${d}`);
 
     const yAxis = d3
       .axisLeft(yScale)
       .ticks(5)
       .tickSize(-width)
-      .tickFormat((d) => `${d}`); // Remove "cm" from ticks
+      .tickFormat((d) => `${d}`);
 
-    // Add x-axis
-    g.append("g")
+    // Add x-axis and remove its outer domain path
+    const xAxisGroup = g
+      .append("g")
       .attr("transform", `translate(0, ${height})`)
-      .call(xAxis)
-      .selectAll("line")
-      .attr("stroke", "#e0e0e0");
+      .call(xAxis);
+    xAxisGroup.select(".domain").remove();
+    xAxisGroup.selectAll("line").attr("stroke", "#e0e0e0");
 
-    // Add y-axis
-    g.append("g").call(yAxis).selectAll("line").attr("stroke", "#e0e0e0");
+    // Add y-axis and remove its outer domain path
+    const yAxisGroup = g.append("g").call(yAxis);
+    yAxisGroup.select(".domain").remove();
+    yAxisGroup.selectAll("line").attr("stroke", "#e0e0e0");
 
     // Add axis labels with improved positioning and styling
     g.append("text")
@@ -145,16 +141,14 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       .attr("y", height + 35)
       .attr("text-anchor", "end")
       .attr("font-size", "12px")
-      .attr("fill", "#777")
-      .text("(cm)");
+      .attr("fill", "#777");
 
     g.append("text")
       .attr("x", -5)
       .attr("y", -10)
       .attr("text-anchor", "end")
       .attr("font-size", "12px")
-      .attr("fill", "#777")
-      .text("(cm)");
+      .attr("fill", "#777");
 
     // Update control lines function
     const updateControlLines = (
@@ -232,12 +226,15 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       g.append("path")
         .attr("d", pathStr)
         .attr("stroke", path.color)
-        .attr("stroke-width", path.id === selectedPath.id ? 4 : 2)
+        .attr(
+          "stroke-width",
+          selectedPaths.some((p) => p.id === path.id) ? 4 : 2
+        )
         .attr("fill", "none")
         .attr("data-id", path.id);
 
       // Show control points and lines for selected path in edit mode
-      if (path.id === selectedPath.id && isEditMode) {
+      if (selectedPaths.some((p) => p.id === path.id) && isEditMode) {
         const { start, cp1, cp2, end } = path.points;
         const tStart = transformPoint(start);
         const tCp1 = transformPoint(cp1);
@@ -317,54 +314,68 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }
     });
 
-    // Draw ball with transformed starting position
-    const ballStart = transformPoint(selectedPath.points.start);
-    const ball = g
-      .append("circle")
-      .attr("r", 10)
-      .attr("fill", "black")
-      .attr("cx", ballStart.x)
-      .attr("cy", ballStart.y);
+    // Function to animate a single ball along its path.
+    const animateBall = (
+      selectedPath: Path
+    ): Promise<{ tAscend: number; vFinal: number }> => {
+      return new Promise((resolve) => {
+        const ballStart = transformPoint(selectedPath.points.start);
+        const ball = g
+          .append("circle")
+          .attr("r", 10)
+          .attr("fill", selectedPath.color)
+          .attr("cx", ballStart.x)
+          .attr("cy", ballStart.y);
 
-    // Get path element for animation
-    const pathElement = g
-      .select(`path[data-id="${selectedPath.id}"]`)
-      .node() as SVGPathElement;
-    if (!pathElement) return;
+        const pathElement = g
+          .select(`path[data-id="${selectedPath.id}"]`)
+          .node() as SVGPathElement;
+        if (!pathElement) {
+          resolve({ tAscend: 0, vFinal: 0 });
+          return;
+        }
+        const pathLength = pathElement.getTotalLength();
 
-    const pathLength = pathElement.getTotalLength();
+        // Calculate physics parameters for the current path.
+        const heightChange = Math.abs(
+          selectedPath.points.end.y - selectedPath.points.start.y
+        );
+        const vFinal = Math.sqrt(2 * GRAVITY * heightChange);
+        const speedFactor = 0.05;
+        const tAscend = ((2 * pathLength) / vFinal) * speedFactor;
 
-    // Physics calculations
-    const heightChange = Math.abs(
-      selectedPath.points.end.y - selectedPath.points.start.y
-    );
-    const vFinal = Math.sqrt(2 * GRAVITY * heightChange);
+        ball
+          .transition()
+          .duration(tAscend * 1000)
+          .ease(d3.easeQuadIn)
+          .attrTween("cx", function () {
+            return function (t: number) {
+              const point = pathElement.getPointAtLength(t * pathLength);
+              return point.x.toString();
+            };
+          })
+          .attrTween("cy", function () {
+            return function (t: number) {
+              const point = pathElement.getPointAtLength(t * pathLength);
+              return point.y.toString();
+            };
+          })
+          .on("end", () => {
+            resolve({ tAscend, vFinal });
+          });
+      });
+    };
 
-    const speedFactor = 0.05; // Lower value = faster animation
-    const tAscend = ((2 * pathLength) / vFinal) * speedFactor;
-
-    // Animate ball
     if (isAnimating) {
-      ball
-        .transition()
-        .duration(tAscend * 1000)
-        .ease(d3.easeQuadIn)
-        .attrTween("cx", function () {
-          return function (t: number) {
-            const point = pathElement.getPointAtLength(t * pathLength);
-            return point.x.toString();
-          };
-        })
-        .attrTween("cy", function () {
-          return function (t: number) {
-            const point = pathElement.getPointAtLength(t * pathLength);
-            return point.y.toString();
-          };
-        })
-        .on("end", () => {
-          // Call the onRunComplete callback with physics data
-          onRunComplete(tAscend, vFinal);
-        });
+      // Animate all selected balls concurrently and wait until all have finished.
+      const animationPromises = selectedPaths.map((path) => animateBall(path));
+      Promise.all(animationPromises).then((results) => {
+        // Optionally, extract tAscend and vFinal from each animation, then signal completion.
+        const ascends = results.map((r) => r.tAscend);
+        const velocities = results.map((r) => r.vFinal);
+        onRunComplete(ascends, velocities);
+        setIsAnimating(false);
+      });
     }
 
     // Add inside useEffect, before drawing paths
@@ -375,12 +386,13 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     );
   }, [
     paths,
-    selectedPath,
+    selectedPaths,
     isAnimating,
     isEditMode,
     planeDimensions,
     updateControlPoint,
     onRunComplete,
+    setIsAnimating,
   ]);
 
   return (
@@ -388,9 +400,7 @@ export const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       ref={svgRef}
       width={800}
       height={500}
-      style={{
-        backgroundColor: "#fff",
-      }}
+      style={{ backgroundColor: "#fff" }}
     />
   );
 };

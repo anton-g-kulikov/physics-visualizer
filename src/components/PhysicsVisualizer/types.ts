@@ -31,7 +31,7 @@ export interface PlaneDimensions {
 
 export interface VisualizationCanvasProps {
   paths: Path[];
-  selectedPath: Path;
+  selectedPaths: Path[];
   isAnimating: boolean;
   isEditMode: boolean;
   planeDimensions: PlaneDimensions;
@@ -45,7 +45,7 @@ export interface VisualizationCanvasProps {
     newY: number
   ) => void;
   addRunHistoryRecord: (record: Omit<RunHistoryRecord, "id" | "date">) => void;
-  onRunComplete: (timeToAscend: number, terminalVelocity: number) => void; // Add this line
+  onRunComplete: (times: number[], velocities: number[]) => void; 
 }
 
 export interface EditModePanelProps {
@@ -65,8 +65,8 @@ export interface PathControlsProps {
 
 export interface RampControlsProps {
   paths: Path[];
-  selectedPath: Path;
-  setSelectedPath: (path: Path) => void;
+  selectedPaths: Path[];
+  setSelectedPaths: (paths: Path[]) => void;
   isAnimating: boolean;
   onLaunch: () => void;
 }
