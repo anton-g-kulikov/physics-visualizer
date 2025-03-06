@@ -27,7 +27,7 @@ export default function Home() {
         <Box py={[4, 6, 8]} textAlign="center">
           <Heading size={["lg", "xl", "2xl"]}>Let's run some balls</Heading>
           <Text mt={4} fontSize={["sm", "md", "lg"]}>
-            Click on a button select to one ramp or all at once, then click "Launch Balls" to
+            Select one ramp or all at once, then click "Launch Balls" to
             see the results.
           </Text>
           <PhysicsVisualizer />
