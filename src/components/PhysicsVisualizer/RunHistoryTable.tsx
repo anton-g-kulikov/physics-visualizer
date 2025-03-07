@@ -69,7 +69,7 @@ export const RunHistoryTable = ({ runHistory }: RunHistoryTableProps) => {
                   </Flex>
                   <Flex justifyContent="space-between" mb={1}>
                     <Text fontSize={fontSize} fontWeight="bold">
-                      Time to Ascend:
+                      Time to Descent:
                     </Text>
                     <Text fontSize={fontSize}>{run.timeToAscend} s</Text>
                   </Flex>
