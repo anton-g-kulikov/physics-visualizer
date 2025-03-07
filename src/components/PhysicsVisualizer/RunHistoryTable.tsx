@@ -106,7 +106,7 @@ export const RunHistoryTable = ({ runHistory }: RunHistoryTableProps) => {
           <Tr>
             <Th>Ramp Color</Th>
             <Th>Date</Th>
-            <Th>Time to Ascend (s)</Th>
+            <Th>Time to Descent (s)</Th>
             <Th>Terminal Velocity (m/s)</Th>
           </Tr>
         </Thead>
